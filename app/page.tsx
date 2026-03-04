@@ -102,6 +102,7 @@ export default function MainPage() {
         {/* 검색창 */}
         <div style={{
           width: "100%", maxWidth: 560,
+          position: "relative",
           animation: loaded ? "fadeUp 0.7s ease 0.2s forwards" : "none",
           opacity: loaded ? undefined : 0,
         }}>
