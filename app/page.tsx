@@ -5,14 +5,20 @@ import { searchApts } from "@/lib/queries";
 
 const RECENT_SEARCHES_KEY = "recentSearches";
 
+interface AptResult {
+  apt_name: string;
+  dong: string;
+  sigungu_code: string;
+}
+
 export default function MainPage() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [focused, setFocused] = useState(false);
+  const [query, setQuery] = useState<string>("");
+  const [results, setResults] = useState<AptResult[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [focused, setFocused] = useState<boolean>(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const inputRef = useRef(null);
+  const [loaded, setLoaded] = useState<boolean>(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -34,9 +40,8 @@ export default function MainPage() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  const goToApt = (aptName) => {
-    // 최근 검색 저장
-    const updated = [aptName, ...recentSearches.filter(r => r !== aptName)].slice(0, 5);
+  const goToApt = (aptName: string) => {
+    const updated = [aptName, ...recentSearches.filter((r: string) => r !== aptName)].slice(0, 5);
     setRecentSearches(updated);
     try { localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated)); } catch {}
     router.push(`/apt/${encodeURIComponent(aptName)}`);
@@ -85,9 +90,8 @@ export default function MainPage() {
           from { opacity: 0; transform: translateY(24px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
         .search-item:hover { background: rgba(31,111,235,0.1) !important; }
         .search-input:focus { outline: none; }
@@ -128,7 +132,6 @@ export default function MainPage() {
         alignItems: "center",
         justifyContent: "center",
         padding: "0 20px 80px",
-        gap: 0,
       }}>
 
         {/* 타이틀 */}
@@ -181,14 +184,18 @@ export default function MainPage() {
           width: "100%",
           maxWidth: 560,
           position: "relative",
+          animation: loaded ? "fadeUp 0.7s ease 0.2s forwards" : "none",
+          opacity: loaded ? undefined : 0,
         }}>
-          {/* 검색 input + 버튼 */}
+          {/* input + 버튼 */}
           <div style={{
             background: focused ? "rgba(31,111,235,0.08)" : "rgba(22,27,34,0.9)",
             border: `1.5px solid ${focused ? "#388bfd" : "#30363d"}`,
             borderRadius: 16,
             transition: "all 0.2s ease",
-            boxShadow: focused ? "0 0 0 4px rgba(31,111,235,0.1), 0 8px 32px rgba(0,0,0,0.4)" : "0 4px 24px rgba(0,0,0,0.3)",
+            boxShadow: focused
+              ? "0 0 0 4px rgba(31,111,235,0.1), 0 8px 32px rgba(0,0,0,0.4)"
+              : "0 4px 24px rgba(0,0,0,0.3)",
             display: "flex",
             alignItems: "center",
             padding: "4px 8px 4px 20px",
@@ -199,13 +206,13 @@ export default function MainPage() {
               ref={inputRef}
               className="search-input"
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setTimeout(() => setFocused(false), 150)}
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter" && results.length > 0) goToApt(results[0].apt_name);
               }}
-              placeholder="아파트 이름을 입력하세요"
+              placeholder="아파트 이름을 입력하세요 (예: 래미안, 힐스테이트)"
               style={{
                 flex: 1,
                 background: "transparent",
@@ -247,28 +254,27 @@ export default function MainPage() {
             </button>
           </div>
 
-          {/* 드롭다운 - 검색창 바로 아래 */}
+          {/* 드롭다운 */}
           {showDropdown && (
             <div style={{
-              position: "absolute",  // ← 변경
+              position: "absolute",
               top: "calc(100% + 6px)",
               left: 0,
               right: 0,
               background: "#161b22",
               border: "1.5px solid #388bfd",
               borderRadius: 12,
-              overflow: "hidden",
               maxHeight: 320,
               overflowY: "auto",
               boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-              zIndex: 999,  // ← 추가
+              zIndex: 999,
             }}>
               {!query && recentSearches.length > 0 && (
                 <>
                   <div style={{ padding: "10px 20px 6px", fontSize: 11, color: "#8b949e", fontWeight: 600 }}>
                     최근 검색
                   </div>
-                  {recentSearches.map((name, i) => (
+                  {recentSearches.map((name: string, i: number) => (
                     <div key={i} className="search-item"
                       onClick={() => goToApt(name)}
                       style={{
@@ -282,7 +288,7 @@ export default function MainPage() {
                   ))}
                 </>
               )}
-              {query && results.map((apt, i) => (
+              {query && results.map((apt: AptResult, i: number) => (
                 <div key={i} className="search-item"
                   onClick={() => goToApt(apt.apt_name)}
                   style={{
@@ -327,7 +333,7 @@ export default function MainPage() {
             { label: "등록 아파트", value: "3만+", icon: "🏢" },
             { label: "실거래 데이터", value: "500만+", icon: "📊" },
             { label: "데이터 업데이트", value: "매월", icon: "🔄" },
-          ].map(stat => (
+          ].map((stat) => (
             <div key={stat.label} style={{
               background: "rgba(22,27,34,0.6)",
               border: "1px solid #21262d",
@@ -342,7 +348,6 @@ export default function MainPage() {
             </div>
           ))}
         </div>
-
       </div>
 
       {/* 푸터 */}
@@ -355,12 +360,6 @@ export default function MainPage() {
       }}>
         데이터 출처: 국토교통부 실거래가 공개시스템 · © 2025 실거래맵
       </footer>
-
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
