@@ -56,3 +56,15 @@ export async function getAptTrades(aptNm: string): Promise<Trade[]> {
     sgg_cd:            aptData.sgg_cd,
   }));
 }
+
+// ─── 지역별 동별 통계 (region_stats 뷰) ──────────────────────
+export async function getRegionStats(sggCd: string): Promise<RegionStat[]> {
+  const { data, error } = await supabase
+    .from("region_stats")
+    .select("umd_nm, avg_price, max_price, min_price, trade_count, last_trade_date")
+    .eq("sgg_cd", sggCd)
+    .order("avg_price", { ascending: false });
+
+  if (error) console.error("getRegionStats error:", error);
+  return data ?? [];
+}
