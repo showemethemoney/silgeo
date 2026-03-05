@@ -16,67 +16,43 @@ export async function searchApts(keyword: string): Promise<AptResult[]> {
 
 // ─── 아파트 거래 이력 (deal + dim_apt + dim_region 조인) ─────
 export async function getAptTrades(aptNm: string): Promise<Trade[]> {
+  // 1단계: apt_search에서 apt_id 가져오기
+  const { data: aptData, error: aptError } = await supabase
+    .from("apt_search")
+    .select("apt_id, umd_nm, sgg_cd, build_year")
+    .eq("apt_nm", aptNm)
+    .limit(1)
+    .single();
+
+  if (aptError || !aptData) {
+    console.error("getAptTrades apt error:", aptError);
+    return [];
+  }
+
+  // 2단계: apt_id로 거래 이력 가져오기
   const { data, error } = await supabase
     .from("deal")
-    .select(`
-      contract_yyyymmdd,
-      price_man,
-      area_x100,
-      floor,
-      trade_type,
-      buyer_type,
-      dim_apt!inner (
-        apt_nm,
-        build_year,
-        dim_address!inner (
-          dim_region!inner (
-            umd_nm,
-            sgg_cd
-          )
-        )
-      )
-    `)
-    .eq("dim_apt.apt_nm", aptNm)
+    .select("contract_yyyymmdd, price_man, area_x100, floor, trade_type, buyer_type")
+    .eq("apt_id", aptData.apt_id)
     .is("cancel_yyyymmdd", null)
     .order("contract_yyyymmdd", { ascending: true })
     .limit(500);
 
-  if (error) console.error("getAptTrades error:", error);
+  if (error) {
+    console.error("getAptTrades deal error:", error);
+    return [];
+  }
 
-  // 중첩 조인 데이터 평탄화
-  return (data ?? []).map((d: any) => ({
+  return (data ?? []).map((d) => ({
     contract_yyyymmdd: d.contract_yyyymmdd,
     price_man:         d.price_man,
     area:              d.area_x100 / 100,
     floor:             d.floor,
     trade_type:        d.trade_type,
     buyer_type:        d.buyer_type,
-    apt_nm:            d.dim_apt.apt_nm,
-    build_year:        d.dim_apt.build_year,
-    umd_nm:            d.dim_apt.dim_address.dim_region.umd_nm,
-    sgg_cd:            d.dim_apt.dim_address.dim_region.sgg_cd,
+    apt_nm:            aptNm,
+    build_year:        aptData.build_year,
+    umd_nm:            aptData.umd_nm,
+    sgg_cd:            aptData.sgg_cd,
   }));
-}
-
-// ─── 지역별 동별 통계 (region_stats 뷰) ──────────────────────
-export async function getRegionStats(sggCd: string): Promise<RegionStat[]> {
-  const { data, error } = await supabase
-    .from("region_stats")
-    .select("umd_nm, avg_price, max_price, min_price, trade_count, last_trade_date")
-    .eq("sgg_cd", sggCd)
-    .order("avg_price", { ascending: false });
-
-  if (error) console.error("getRegionStats error:", error);
-  return data ?? [];
-}
-
-// ─── 아파트 목록 (정적 페이지 생성용) ────────────────────────
-export async function getAllAptNames(): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("apt_search")
-    .select("apt_nm")
-    .limit(30000);
-
-  if (error) console.error("getAllAptNames error:", error);
-  return [...new Set((data ?? []).map((d) => d.apt_nm))];
 }
