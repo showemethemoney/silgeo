@@ -97,7 +97,7 @@ export default function RegionPage({ sggCd, stats }: Props) {
             </div>
 
             {/* 2단계 지역 선택 */}
-            <RegionSelector currentSggCd={sggCd} />
+            <RegionSelector currentCode={sggCd} />
           </div>
         </div>
 
