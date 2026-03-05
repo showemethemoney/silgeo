@@ -3,28 +3,18 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { colors, radius } from "@/styles/tokens";
 
-// ─── 시/도 목록 ───────────────────────────────────────────────
 const SIDO_LIST = [
-  { code: "11", name: "서울" },
-  { code: "21", name: "부산" },
-  { code: "22", name: "대구" },
-  { code: "23", name: "인천" },
-  { code: "24", name: "광주" },
-  { code: "25", name: "대전" },
-  { code: "26", name: "울산" },
-  { code: "29", name: "세종" },
-  { code: "31", name: "경기" },
-  { code: "32", name: "강원" },
-  { code: "33", name: "충북" },
-  { code: "34", name: "충남" },
-  { code: "35", name: "전북" },
-  { code: "36", name: "전남" },
-  { code: "37", name: "경북" },
-  { code: "38", name: "경남" },
+  { code: "11", name: "서울" }, { code: "21", name: "부산" },
+  { code: "22", name: "대구" }, { code: "23", name: "인천" },
+  { code: "24", name: "광주" }, { code: "25", name: "대전" },
+  { code: "26", name: "울산" }, { code: "29", name: "세종" },
+  { code: "31", name: "경기" }, { code: "32", name: "강원" },
+  { code: "33", name: "충북" }, { code: "34", name: "충남" },
+  { code: "35", name: "전북" }, { code: "36", name: "전남" },
+  { code: "37", name: "경북" }, { code: "38", name: "경남" },
   { code: "39", name: "제주" },
 ];
 
-// ─── 구/군 목록 ───────────────────────────────────────────────
 const SGG_LIST: Record<string, { code: string; name: string }[]> = {
   "11": [
     { code: "11110", name: "종로구" }, { code: "11140", name: "중구" },
@@ -79,9 +69,7 @@ const SGG_LIST: Record<string, { code: string; name: string }[]> = {
     { code: "26170", name: "동구" },    { code: "26200", name: "북구" },
     { code: "26710", name: "울주군" },
   ],
-  "29": [
-    { code: "29110", name: "세종시" },
-  ],
+  "29": [{ code: "29110", name: "세종시" }],
   "31": [
     { code: "31010", name: "수원시" },  { code: "31030", name: "성남시" },
     { code: "31040", name: "의정부시" },{ code: "31050", name: "안양시" },
@@ -143,7 +131,7 @@ const SGG_LIST: Record<string, { code: string; name: string }[]> = {
 };
 
 interface Props {
-  currentSggCd: string;
+  currentCode: string; // sgg_cd (5자리) 또는 sido_cd (2자리)
 }
 
 const selectStyle = {
@@ -158,9 +146,10 @@ const selectStyle = {
   minWidth: 110,
 };
 
-export default function RegionSelector({ currentSggCd }: Props) {
+export default function RegionSelector({ currentCode }: Props) {
   const router = useRouter();
-  const currentSido = currentSggCd.slice(0, 2);
+  const isSido = currentCode.length === 2;
+  const currentSido = isSido ? currentCode : currentCode.slice(0, 2);
   const [selectedSido, setSelectedSido] = useState<string>(currentSido);
 
   const sggList = SGG_LIST[selectedSido] ?? [];
@@ -168,13 +157,17 @@ export default function RegionSelector({ currentSggCd }: Props) {
   const handleSidoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const sido = e.target.value;
     setSelectedSido(sido);
-    // 시/도 변경 시 첫 번째 구/군으로 자동 이동
-    const first = SGG_LIST[sido]?.[0];
-    if (first) router.push(`/region/${first.code}`);
+    // 시/도 전체로 이동
+    router.push(`/region/sido/${sido}`);
   };
 
   const handleSggChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    router.push(`/region/${e.target.value}`);
+    const val = e.target.value;
+    if (val === "all") {
+      router.push(`/region/sido/${selectedSido}`);
+    } else {
+      router.push(`/region/${val}`);
+    }
   };
 
   return (
@@ -182,22 +175,19 @@ export default function RegionSelector({ currentSggCd }: Props) {
       <span style={{ fontSize: 13, color: colors.text.secondary }}>지역 선택</span>
 
       {/* 시/도 */}
-      <select
-        value={selectedSido}
-        onChange={handleSidoChange}
-        style={selectStyle}
-      >
+      <select value={selectedSido} onChange={handleSidoChange} style={selectStyle}>
         {SIDO_LIST.map(s => (
           <option key={s.code} value={s.code}>{s.name}</option>
         ))}
       </select>
 
-      {/* 구/군 */}
+      {/* 구/군 - 전체 포함 */}
       <select
-        value={currentSggCd}
+        value={isSido ? "all" : currentCode}
         onChange={handleSggChange}
         style={selectStyle}
       >
+        <option value="all">전체</option>
         {sggList.map(s => (
           <option key={s.code} value={s.code}>{s.name}</option>
         ))}
