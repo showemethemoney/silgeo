@@ -89,3 +89,33 @@ export async function getAllAptNames(): Promise<string[]> {
   if (error) console.error("getAllAptNames error:", error);
   return [...new Set((data ?? []).map((d) => d.apt_nm))];
 }
+
+// ─── 랭킹 데이터 ─────────────────────────────────────────────
+export interface RankingItem {
+  apt_nm: string;
+  sgg_cd: string;
+  umd_nm: string;
+  trade_count: number;
+  avg_price: number;
+  max_price: number;
+  corp_buy_count: number;
+  corp_ratio: number;
+  prev_avg_price: number | null;
+  price_diff: number;
+  price_diff_pct: number;
+}
+
+export async function getRanking(
+  orderBy: "trade_count" | "max_price" | "price_diff_pct" | "corp_ratio",
+  limit = 20
+): Promise<RankingItem[]> {
+  const { data, error } = await supabase
+    .from("ranking_stats")
+    .select("*")
+    .gt("trade_count", 1)
+    .order(orderBy, { ascending: false })
+    .limit(limit);
+
+  if (error) console.error("getRanking error:", error);
+  return data ?? [];
+}
