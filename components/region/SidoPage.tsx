@@ -7,14 +7,6 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AdBanner from "@/components/ui/AdBanner";
 import RegionSelector from "./RegionSelector";
-import { SGG_NAMES } from "./constants";
-
-const SIDO_NAMES: Record<string, string> = {
-  "11": "서울", "21": "부산", "22": "대구", "23": "인천",
-  "24": "광주", "25": "대전", "26": "울산", "29": "세종",
-  "31": "경기", "32": "강원", "33": "충북", "34": "충남",
-  "35": "전북", "36": "전남", "37": "경북", "38": "경남", "39": "제주",
-};
 
 const formatPrice = (val: number): string => {
   if (!val) return "-";
@@ -45,7 +37,8 @@ export default function SidoPage({ sidoCd, stats }: Props) {
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const router = useRouter();
 
-  const sidoName    = SIDO_NAMES[sidoCd] || sidoCd;
+  // DB에서 가져온 시/도명 사용
+  const sidoName    = stats[0]?.sido_nm ?? sidoCd;
   const sorted      = [...stats].sort((a, b) => b[sortBy] - a[sortBy]);
   const totalTrades = stats.reduce((s, r) => s + r.trade_count, 0);
   const avgPrice    = stats.length
@@ -172,7 +165,7 @@ export default function SidoPage({ sidoCd, stats }: Props) {
                       cursor: "pointer",
                     }}>
                     <td style={{ padding: "12px 16px", fontWeight: 500 }}>
-                      {row.sgg_cd ? (SGG_NAMES[row.sgg_cd] || row.sgg_cd) : "-"}
+                      {row.sgg_nm ?? row.sgg_cd}
                     </td>
                     <td style={{ padding: "12px 16px", textAlign: "right", fontWeight: 700, color: colors.text.accent }}>
                       {formatPrice(row.avg_price)}
@@ -218,7 +211,6 @@ export default function SidoPage({ sidoCd, stats }: Props) {
             </p>
           </div>
         )}
-
       </div>
 
       <Footer />

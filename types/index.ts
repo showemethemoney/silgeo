@@ -4,6 +4,8 @@ export interface AptResult {
   apt_nm: string;
   umd_nm: string;
   sgg_cd: string;
+  sgg_nm: string;
+  sido_nm: string;
   build_year: number;
 }
 
@@ -19,6 +21,8 @@ export interface Trade {
   build_year: number;
   umd_nm: string;
   sgg_cd: string;
+  sgg_nm: string;
+  sido_nm: string;
 }
 
 // 차트 데이터
@@ -37,10 +41,12 @@ export interface TradeSummary {
   diff: number;
 }
 
-// 지역별 통계 (region_stats, sido_stats 공용)
+// 지역별 통계
 export interface RegionStat {
-  umd_nm?: string;   // 동별 (region_stats)
-  sgg_cd?: string;   // 구/군별 (sido_stats)
+  umd_nm?: string;
+  sgg_cd?: string;
+  sgg_nm?: string;
+  sido_nm?: string;
   avg_price: number;
   max_price: number;
   min_price: number;

@@ -6,24 +6,21 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AdBanner from "@/components/ui/AdBanner";
 import { RankingItem } from "@/lib/queries";
-import { SGG_NAMES } from "@/components/region/constants";
 
-// ─── 유틸 ────────────────────────────────────────────────────
 const formatPrice = (val: number): string => {
   if (!val) return "-";
   if (val >= 10000) return `${(val / 10000).toFixed(1)}억`;
   return `${val.toLocaleString()}만`;
 };
 
-// ─── 탭 정의 ─────────────────────────────────────────────────
-const TABS = [
-  { key: "trade",  label: "🔥 거래량 TOP",   desc: "이번달 거래 많은 아파트" },
-  { key: "max",    label: "💰 최고가 TOP",    desc: "이번달 최고가 거래 아파트" },
-  { key: "rise",   label: "📈 급등 TOP",      desc: "전월 대비 가격 상승률 TOP" },
-  { key: "corp",   label: "🏛️ 법인매수 TOP",  desc: "법인 매수 비율 높은 아파트" },
+const SORT_OPTIONS = [
+  { key: "trade",  label: "🔥 거래량 TOP",  desc: "이번달 거래 많은 아파트" },
+  { key: "max",    label: "💰 최고가 TOP",   desc: "이번달 최고가 거래 아파트" },
+  { key: "rise",   label: "📈 급등 TOP",     desc: "전월 대비 가격 상승률 TOP" },
+  { key: "corp",   label: "🏛️ 법인매수 TOP", desc: "법인 매수 비율 높은 아파트" },
 ] as const;
 
-type TabKey = typeof TABS[number]["key"];
+type TabKey = typeof SORT_OPTIONS[number]["key"];
 
 interface Props {
   byTrade: RankingItem[];
@@ -32,36 +29,22 @@ interface Props {
   byCorp:  RankingItem[];
 }
 
-// ─── 랭킹 뱃지 ───────────────────────────────────────────────
 function RankBadge({ rank }: { rank: number }) {
-  const medals: Record<number, { bg: string; color: string; text: string }> = {
-    1: { bg: "rgba(255,215,0,0.15)",  color: "#FFD700", text: "🥇" },
-    2: { bg: "rgba(192,192,192,0.15)",color: "#C0C0C0", text: "🥈" },
-    3: { bg: "rgba(205,127,50,0.15)", color: "#CD7F32", text: "🥉" },
-  };
-  const medal = medals[rank];
-  if (medal) {
-    return (
-      <div style={{
-        width: 32, height: 32, borderRadius: "50%",
-        background: medal.bg,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 16, flexShrink: 0,
-      }}>{medal.text}</div>
-    );
-  }
+  const medals: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
   return (
     <div style={{
       width: 32, height: 32, borderRadius: "50%",
-      background: colors.bg.hover,
+      background: rank <= 3 ? "rgba(255,215,0,0.1)" : colors.bg.hover,
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: 12, color: colors.text.secondary,
+      fontSize: rank <= 3 ? 16 : 12,
+      color: rank <= 3 ? undefined : colors.text.secondary,
       fontWeight: 700, flexShrink: 0,
-    }}>{rank}</div>
+    }}>
+      {medals[rank] ?? rank}
+    </div>
   );
 }
 
-// ─── 서브값 렌더 ─────────────────────────────────────────────
 function SubValue({ tabKey, item }: { tabKey: TabKey; item: RankingItem }) {
   if (tabKey === "trade") return (
     <div style={{ fontSize: 13, color: colors.text.accent, fontWeight: 700 }}>
@@ -100,21 +83,17 @@ function SubValue({ tabKey, item }: { tabKey: TabKey; item: RankingItem }) {
   return null;
 }
 
-// ─── 메인 컴포넌트 ────────────────────────────────────────────
 export default function RankingClient({ byTrade, byMax, byRise, byCorp }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>("trade");
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const router = useRouter();
 
   const dataMap: Record<TabKey, RankingItem[]> = {
-    trade: byTrade,
-    max:   byMax,
-    rise:  byRise,
-    corp:  byCorp,
+    trade: byTrade, max: byMax, rise: byRise, corp: byCorp,
   };
 
   const currentData = dataMap[activeTab];
-  const currentTab  = TABS.find(t => t.key === activeTab)!;
+  const currentTab  = SORT_OPTIONS.find(t => t.key === activeTab)!;
 
   return (
     <div style={{
@@ -149,7 +128,7 @@ export default function RankingClient({ byTrade, byMax, byRise, byCorp }: Props)
 
         {/* 탭 */}
         <div style={{ display: "flex", gap: 8, padding: "20px 0 16px", flexWrap: "wrap" }}>
-          {TABS.map(tab => (
+          {SORT_OPTIONS.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
               background: activeTab === tab.key ? "#1f6feb" : colors.bg.secondary,
               border: `1px solid ${activeTab === tab.key ? colors.border.active : colors.border.subtle}`,
@@ -196,25 +175,20 @@ export default function RankingClient({ byTrade, byMax, byRise, byCorp }: Props)
                 background: hoveredRow === i ? colors.bg.hover : "transparent",
                 cursor: "pointer", transition: "background 0.1s",
               }}>
-
-              {/* 순위 뱃지 */}
               <RankBadge rank={i + 1} />
-
-              {/* 아파트 정보 */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: colors.text.primary, marginBottom: 3 }}>
                   {item.apt_nm}
                 </div>
                 <div style={{ fontSize: 12, color: colors.text.secondary }}>
-                  {SGG_NAMES[item.sgg_cd] ? `${SGG_NAMES[item.sgg_cd]} · ${item.umd_nm}` : item.umd_nm}
+                  {item.sido_nm && item.sgg_nm
+                    ? `${item.sido_nm} ${item.sgg_nm} · ${item.umd_nm}`
+                    : item.umd_nm}
                 </div>
               </div>
-
-              {/* 서브값 */}
               <div style={{ textAlign: "right", flexShrink: 0 }}>
                 <SubValue tabKey={activeTab} item={item} />
               </div>
-
               <span style={{ fontSize: 12, color: colors.text.secondary, flexShrink: 0 }}>→</span>
             </div>
           ))}
@@ -222,7 +196,6 @@ export default function RankingClient({ byTrade, byMax, byRise, byCorp }: Props)
 
         <AdBanner />
 
-        {/* SEO 텍스트 */}
         <div style={{
           marginTop: 24, padding: "20px",
           background: colors.bg.secondary,

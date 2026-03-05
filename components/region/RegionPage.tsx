@@ -7,9 +7,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AdBanner from "@/components/ui/AdBanner";
 import RegionSelector from "./RegionSelector";
-import { SGG_NAMES } from "./constants";
 
-// ─── 유틸 ────────────────────────────────────────────────────
 const formatPrice = (val: number): string => {
   if (!val) return "-";
   if (val >= 10000) return `${(val / 10000).toFixed(1)}억`;
@@ -21,7 +19,6 @@ const formatDate = (val: number): string => {
   return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
 };
 
-// ─── 정렬 옵션 ───────────────────────────────────────────────
 const SORT_OPTIONS = [
   { key: "avg_price",   label: "평균가 순" },
   { key: "trade_count", label: "거래량 순" },
@@ -30,7 +27,6 @@ const SORT_OPTIONS = [
 
 type SortKey = typeof SORT_OPTIONS[number]["key"];
 
-// ─── 컴포넌트 ────────────────────────────────────────────────
 interface Props {
   sggCd: string;
   stats: RegionStat[];
@@ -41,7 +37,12 @@ export default function RegionPage({ sggCd, stats }: Props) {
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const router = useRouter();
 
-  const regionName  = SGG_NAMES[sggCd] || sggCd;
+  // DB에서 가져온 지역명 사용
+  const firstStat   = stats[0];
+  const regionName  = firstStat
+    ? `${firstStat.sido_nm} ${firstStat.sgg_nm}`
+    : sggCd;
+
   const sorted      = [...stats].sort((a, b) => b[sortBy] - a[sortBy]);
   const totalTrades = stats.reduce((s, r) => s + r.trade_count, 0);
   const avgPrice    = stats.length
@@ -83,8 +84,6 @@ export default function RegionPage({ sggCd, stats }: Props) {
                 동별 평균 실거래가 · 국토교통부 공식 데이터
               </p>
             </div>
-
-            {/* 2단계 지역 선택 */}
             <RegionSelector currentCode={sggCd} />
           </div>
         </div>
@@ -167,7 +166,6 @@ export default function RegionPage({ sggCd, stats }: Props) {
                       borderBottom: `1px solid ${colors.border.default}`,
                       background: hoveredRow === i ? colors.bg.hover : "transparent",
                       transition: "background 0.1s",
-                      cursor: "pointer",
                     }}>
                     <td style={{ padding: "12px 16px", fontWeight: 500 }}>{row.umd_nm}</td>
                     <td style={{ padding: "12px 16px", textAlign: "right", fontWeight: 700, color: colors.text.accent }}>
@@ -194,7 +192,6 @@ export default function RegionPage({ sggCd, stats }: Props) {
 
         <AdBanner />
 
-        {/* SEO 텍스트 */}
         {stats.length > 0 && (
           <div style={{
             marginTop: 24, padding: "20px",
@@ -215,7 +212,6 @@ export default function RegionPage({ sggCd, stats }: Props) {
             </p>
           </div>
         )}
-
       </div>
 
       <Footer />
