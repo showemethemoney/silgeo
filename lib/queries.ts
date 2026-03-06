@@ -86,7 +86,7 @@ export async function getSidoList() {
   const { data, error } = await supabase
     .from("sido_stats")
     .select("sido_cd, sido_nm")
-    .order("sido_cd");
+    .order("sido_nm");
 
   if (error) console.error("getSidoList error:", error);
 
@@ -103,7 +103,7 @@ export async function getSggList(sidoCd: string) {
     .from("sido_stats")
     .select("sgg_cd, sgg_nm")
     .eq("sido_cd", sidoCd)
-    .order("sgg_cd");
+    .order("sgg_nm");
 
   if (error) console.error("getSggList error:", error);
 
